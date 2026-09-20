@@ -84,19 +84,19 @@ To reinstall or switch profile later, run `./scripts/install-drupal` (interactiv
 
 | Token | Example |
 |---|---|
-| `{{MODULE_NAME}}` | `localgov_bus_data` (blank for no custom module) |
-| `{{MODULE_LABEL}}` | `LocalGov Bus Data` |
-| `{{MODULE_PATH}}` | `web/modules/custom/localgov_bus_data` |
-| `{{MODULE_REPO}}` | `git@git.drupal.org:project/localgov_bus_data.git` |
-| `{{THEME_NAME}}` | `cumberland_theme` (blank for no custom theme) |
-| `{{THEME_LABEL}}` | `Cumberland Theme` |
-| `{{THEME_PATH}}` | `web/themes/custom/cumberland_theme` |
-| `{{DDEV_NAME}}` | `lgd-bus-data-dev` |
-| `{{DDEV_URL}}` | `https://lgd-bus-data-dev.ddev.site` |
-| `{{CLIENT}}` | `Cumberland Council bus timetables` |
-| `{{SKILL_FORK}}` | `jamesfmcgrath` |
+| `` | `localgov_bus_data` (blank for no custom module) |
+| `` | `LocalGov Bus Data` |
+| `web/modules/custom` | `web/modules/custom/localgov_bus_data` |
+| `` | `git@git.drupal.org:project/localgov_bus_data.git` |
+| `` | `cumberland_theme` (blank for no custom theme) |
+| `` | `Cumberland Theme` |
+| `web/themes/custom` | `web/themes/custom/cumberland_theme` |
+| `t-460-test` | `lgd-bus-data-dev` |
+| `https://t-460-test.ddev.site` | `https://lgd-bus-data-dev.ddev.site` |
+| `Test` | `Cumberland Council bus timetables` |
+| `jamesfmcgrath` | `jamesfmcgrath` |
 
-From your flavour/version answers, `init.sh` also derives `{{DRUPAL_TYPE}}` (DDEV type, e.g. `drupal11`), `{{DRUPAL_FLAVOUR}}` (`localgov`, `vanilla`, or `cms`), `{{COMPOSER_PROJECT}}` (e.g. `drupal/localgov_project`), and `{{INSTALL_PROFILE}}` (e.g. `localgov`).
+From your flavour/version answers, `init.sh` also derives `drupal11` (DDEV type, e.g. `drupal11`), `vanilla` (`localgov`, `vanilla`, or `cms`), `drupal/recommended-project:^11` (e.g. `drupal/localgov_project`), and `standard` (e.g. `localgov`).
 
 ## Common commands
 
@@ -152,7 +152,7 @@ apply anything relevant by hand.
 
 - Custom code lives in the workspace the quality tooling scopes to: `web/modules/custom` and `web/themes/custom`. That list is `LINT_PATHS` in the `Makefile`, and it is mirrored in `phpcs.xml.dist`, `phpstan.neon`, `package.json`, and the `LINT_PATHS` job env var in `.github/workflows/ci.yml`. To widen it, add the path in those five places. The module-specific targets (`enable`, `module-ci`, `mod-*`) stay scoped to the configured module; `subtheme` and `component` stay scoped to the configured theme.
 - Agent resource folders (`.claude/skills/`, `.cursor/skills/`) are gitignored and reproduced by `agr` from `agr.toml` + `agr.lock`. Do not vendor copies. Tracked canonical files: `AGENTS.md`, `CLAUDE.md` (import stub), `agr.toml`, `.claude/agents/`, `.claude/commands/`, `.claude/settings.local.json.dist`.
-- The `drupal-localgov` skill is hosted in a fork of `drupal-agent-resources` (`{{SKILL_FORK}}/drupal-agent-resources`). Point `{{SKILL_FORK}}` at whichever fork you maintain.
-- `agr.lock` is not committed in this bare template, since `{{SKILL_FORK}}` is still a token and agr cannot resolve it into a lock. `scripts/setup.sh` runs `agr sync`/`agr add` on first run, after `init.sh` has substituted a real GitHub owner, which generates `agr.lock`. Commit that generated `agr.lock` in the project created from this template so skill versions are pinned for the rest of the team.
+- The `drupal-localgov` skill is hosted in a fork of `drupal-agent-resources` (`jamesfmcgrath/drupal-agent-resources`). Point `jamesfmcgrath` at whichever fork you maintain.
+- `agr.lock` is not committed in this bare template, since `jamesfmcgrath` is still a token and agr cannot resolve it into a lock. `scripts/setup.sh` runs `agr sync`/`agr add` on first run, after `init.sh` has substituted a real GitHub owner, which generates `agr.lock`. Commit that generated `agr.lock` in the project created from this template so skill versions are pinned for the rest of the team.
 - `config_exclude_modules` (set in `assets/settings.local.php`) only keeps a module's own enablement out of exported config; it does not exclude any config entities a dev-only module might create along the way. Projects with strict config discipline may want `drupal/config_split` for a more complete local/production split later; this template does not implement that, only documents the gap.
 - This template does not set `$settings['config_sync_directory']`, so Drupal falls back to its own default (a `files/sync` path inside the public files directory, which `.gitignore` already excludes and which is web-served). Projects that want `site_tools`'s exported config actually tracked in git need to set `$settings['config_sync_directory']` to a project-root path (for example `'../config/sync'`) themselves; this template does not do that for you.

@@ -6,7 +6,7 @@
 # Tracked (do NOT ignore): AGENTS.md, CLAUDE.md (import stub), .claude/MEMORY.md,
 # .claude/agents/, .claude/commands/, .claude/settings.local.json.dist, agr.toml,
 # template.answers (the answers scripts/init.sh was run with; commit it)
-# agr.lock is NOT tracked here (agr.toml still holds the {{SKILL_FORK}} token);
+# agr.lock is NOT tracked here (agr.toml still holds the jamesfmcgrath token);
 # setup.sh generates it on first run and the created project should commit it.
 
 # Drupal / DDEV build artifacts (adjust to your project's policy)
@@ -38,3 +38,4 @@
 /test-results/
 /playwright-report/
 /blob-report/
+/.gitattributes

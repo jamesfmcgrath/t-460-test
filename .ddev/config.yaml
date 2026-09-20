@@ -1,5 +1,5 @@
-name: {{DDEV_NAME}}
-type: {{DRUPAL_TYPE}}
+name: t-460-test
+type: drupal11
 docroot: web
 php_version: "8.3"
 webserver_type: nginx-fpm

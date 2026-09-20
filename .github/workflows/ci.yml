@@ -257,7 +257,7 @@ jobs:
         timeout-minutes: 20
         continue-on-error: false
         run: |
-          vendor/bin/drush si {{INSTALL_PROFILE}} -y \
+          vendor/bin/drush si standard -y \
             --db-url=sqlite://sites/default/files/.ht.sqlite
 
       - name: Create a node and set a deterministic front page

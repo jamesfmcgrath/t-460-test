@@ -1,5 +1,5 @@
 ##
-## {{DDEV_NAME}} - dev environment
+## t-460-test - dev environment
 ## Usage: make <target>
 ##
 
@@ -10,13 +10,13 @@
         mod-log mod-status mod-fetch mod-branch tag switch mr \
         guard-module-name guard-module-git guard-theme-name
 
-MODULE = {{MODULE_PATH}}
-MODULE_NAME = {{MODULE_NAME}}
+MODULE = web/modules/custom
+MODULE_NAME = 
 
-THEME_PATH = {{THEME_PATH}}
-THEME_NAME = {{THEME_NAME}}
-THEME_LABEL = {{THEME_LABEL}}
-DRUPAL_FLAVOUR = {{DRUPAL_FLAVOUR}}
+THEME_PATH = web/themes/custom
+THEME_NAME = 
+THEME_LABEL = 
+DRUPAL_FLAVOUR = vanilla
 
 # The custom code workspace. Every quality target below iterates over these
 # paths, so a project can hold any number of custom modules and themes. Add a

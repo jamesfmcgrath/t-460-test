@@ -1,7 +1,7 @@
 {
-  "name": "{{PACKAGE_NAME}}",
+  "name": "t-460-test",
   "private": true,
-  "description": "{{PACKAGE_DESCRIPTION}}",
+  "description": "Front-end tooling for Test.",
   "scripts": {
     "format": "prettier --write --no-error-on-unmatched-pattern \"web/modules/custom/**/*.{css,js,json,yml,yaml,md}\" \"web/themes/custom/**/*.{css,js,json,yml,yaml,md}\"",
     "format:check": "prettier --check --no-error-on-unmatched-pattern \"web/modules/custom/**/*.{css,js,json,yml,yaml,md}\" \"web/themes/custom/**/*.{css,js,json,yml,yaml,md}\"",

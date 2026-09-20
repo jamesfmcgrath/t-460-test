@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# {{DDEV_NAME}} - one-command dev environment spin-up.
+# t-460-test - one-command dev environment spin-up.
 # Run from the repo root: ./scripts/setup.sh
 # Flags:
 #   --force-reviewer   re-fetch drupal-reviewer even if present
@@ -14,13 +14,13 @@ success() { echo -e "${GREEN}OK $*${RESET}"; }
 warn()    { echo -e "${YELLOW}!! $*${RESET}"; }
 error()   { echo -e "${RED}xx $*${RESET}"; exit 1; }
 
-MODULE_REPO="{{MODULE_REPO}}"
-MODULE_PATH="{{MODULE_PATH}}"
-MODULE_NAME="{{MODULE_NAME}}"
-SKILL_FORK="{{SKILL_FORK}}"
-COMPOSER_PROJECT="{{COMPOSER_PROJECT}}"
-INSTALL_PROFILE="{{INSTALL_PROFILE}}"
-DRUPAL_TYPE="{{DRUPAL_TYPE}}"
+MODULE_REPO=""
+MODULE_PATH="web/modules/custom"
+MODULE_NAME=""
+SKILL_FORK="jamesfmcgrath"
+COMPOSER_PROJECT="drupal/recommended-project:^11"
+INSTALL_PROFILE="standard"
+DRUPAL_TYPE="drupal11"
 REVIEWER_REF="main"
 REVIEWER_URL="https://raw.githubusercontent.com/${SKILL_FORK}/drupal-agent-resources/${REVIEWER_REF}/.claude/agents/drupal-reviewer.md"
 
@@ -34,7 +34,7 @@ for a in "$@"; do
   esac
 done
 
-echo ""; echo -e "${BOLD}=== {{DDEV_NAME}} setup ===${RESET}"; echo ""
+echo ""; echo -e "${BOLD}=== t-460-test setup ===${RESET}"; echo ""
 
 # --- Prerequisites ---
 info "Checking prerequisites..."
@@ -314,6 +314,6 @@ else
 fi
 
 echo ""; success "Setup complete."
-echo "  Site:  ${BOLD}{{DDEV_URL}}${RESET}"
+echo "  Site:  ${BOLD}https://t-460-test.ddev.site${RESET}"
 echo "  Open:  ddev launch        Login: ddev drush uli"
 echo "  Tasks: make help"

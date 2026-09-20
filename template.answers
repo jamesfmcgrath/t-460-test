@@ -1,0 +1,19 @@
+# Answers used by scripts/init.sh on 2026-09-20. Not a shell script:
+# a record of the run, one KEY=value per line, values unquoted.
+MODULE_NAME=
+MODULE_LABEL=
+MODULE_PATH=web/modules/custom
+MODULE_REPO=
+THEME_NAME=
+THEME_LABEL=
+THEME_PATH=web/themes/custom
+DDEV_NAME=t-460-test
+DDEV_URL=https://t-460-test.ddev.site
+CLIENT=Test
+SKILL_FORK=jamesfmcgrath
+FLAVOUR=vanilla
+VERSION=11
+DRUPAL_TYPE=drupal11
+DRUPAL_FLAVOUR=vanilla
+COMPOSER_PROJECT=drupal/recommended-project:^11
+INSTALL_PROFILE=standard

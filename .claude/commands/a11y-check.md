@@ -6,7 +6,7 @@ arguments: "[url-or-path ...]"
 
 # Accessibility Check
 
-Audit one or more pages of `{{DDEV_URL}}` for accessibility. If paths are given as arguments, test those. Otherwise test a representative set of page types {{MODULE_AFFECTS}} (at minimum: the front page, one listing page, one detail page, and one page with a form).
+Audit one or more pages of `https://t-460-test.ddev.site` for accessibility. If paths are given as arguments, test those. Otherwise test a representative set of page types the site includes (at minimum: the front page, one listing page, one detail page, and one page with a form).
 
 Public sector context: legal minimum is WCAG 2.1 AA (EN 301 549); test to WCAG 2.2 AA. Before fixing anything found here, consult the drupal-expert or drupal-localgov skill so fixes are made the Drupal way (Twig templates and render arrays, not JS patches), and finish by running the drupal-reviewer agent on the changed files.
 
@@ -23,7 +23,7 @@ const results = await axe.run(document, { runOnly: { type: 'tag', values: ['wcag
 console.log(JSON.stringify(results.violations.map(v => ({ id: v.id, impact: v.impact, wcag: v.tags, count: v.nodes.length, sample: v.nodes[0]?.target }))));
 ```
 
-Fallback without browser tools: `npx @axe-core/cli {{DDEV_URL}}/<path>` (ask before installing).
+Fallback without browser tools: `npx @axe-core/cli https://t-460-test.ddev.site/<path>` (ask before installing).
 
 ## Step 2: Keyboard pass
 
@@ -54,7 +54,7 @@ Group findings by WCAG success criterion with severity (critical / serious / mod
 
 ## Fix rules
 
-- Fix in the correct layer: markup in Twig, styling in CSS following the Front-end Standards in `AGENTS.md`.{{THEME_LAYER}}
+- Fix in the correct layer: markup in Twig, styling in CSS following the Front-end Standards in `AGENTS.md`.
 - Where the affected markup is a single directory component, fix it inside that component (its Twig, its CSS), not in a theme-wide override.
 - Prefer native HTML semantics over ARIA. ARIA is a last resort.
 - After fixes: `ddev drush cr`, re-run the scan on affected pages, and run the drupal-reviewer agent.
