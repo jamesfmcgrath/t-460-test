@@ -1,0 +1,16 @@
+name: {{DDEV_NAME}}
+type: {{DRUPAL_TYPE}}
+docroot: web
+php_version: "8.3"
+webserver_type: nginx-fpm
+nodejs_version: "20"
+corepack_enable: false
+database:
+  type: mariadb
+  version: "10.11"
+# Env for Drupal test runs (phpunit -c web/core uses these; DDEV DB creds are db/db/db).
+web_environment:
+  - SIMPLETEST_DB=mysql://db:db@db/db
+  - SIMPLETEST_BASE_URL=http://web
+  - BROWSERTEST_OUTPUT_DIRECTORY=/var/www/html/web/sites/simpletest/browser_output
+  - SYMFONY_DEPRECATIONS_HELPER=weak

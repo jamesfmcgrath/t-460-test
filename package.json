@@ -1,0 +1,16 @@
+{
+  "name": "{{PACKAGE_NAME}}",
+  "private": true,
+  "description": "{{PACKAGE_DESCRIPTION}}",
+  "scripts": {
+    "format": "prettier --write --no-error-on-unmatched-pattern \"web/modules/custom/**/*.{css,js,json,yml,yaml,md}\" \"web/themes/custom/**/*.{css,js,json,yml,yaml,md}\"",
+    "format:check": "prettier --check --no-error-on-unmatched-pattern \"web/modules/custom/**/*.{css,js,json,yml,yaml,md}\" \"web/themes/custom/**/*.{css,js,json,yml,yaml,md}\"",
+    "spell": "cspell --no-must-find-files \"web/modules/custom/**\" \"web/themes/custom/**\""
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
+    "@playwright/test": "^1.62.1",
+    "cspell": "^9.8.0",
+    "prettier": "^3.3.0"
+  }
+}

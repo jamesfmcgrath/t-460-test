@@ -1,0 +1,392 @@
+# CI for the custom code developed in this repo.
+# Scopes to the custom code workspace (LINT_PATHS below): web/modules/custom and
+# web/themes/custom. If a module or theme is maintained in its own repo, put a
+# copy of this workflow there instead.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+# Same-repo pull requests fire both a push event and a pull_request event for
+# the identical commit, so without this every PR push doubles every job.
+# Group by workflow + ref and cancel the superseded run rather than
+# restricting push, so direct pushes to a branch with no open PR still get a
+# CI run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Skip everything on the bare template (no composer.json until a project is
+  # scaffolded from it), so the template repo does not show a failing CI run.
+  guard:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: check
+        run: |
+          if [ -f composer.json ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false (bare template, nothing to test)"
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # Runs only on the bare template (composer.json absent), the inverse of the
+  # guard above. Gives the template repo itself a green, meaningful CI run
+  # instead of a run that skips everything.
+  template:
+    name: Template regression suite
+    needs: guard
+    if: needs.guard.outputs.run == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: ./scripts/test-template.sh
+
+  php:
+    name: PHP lint, static analysis, tests
+    needs: guard
+    if: needs.guard.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    env:
+      # The custom code workspace. Keep in step with LINT_PATHS in the Makefile.
+      LINT_PATHS: web/modules/custom web/themes/custom
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: gd, pdo_sqlite, sqlite3, mbstring, dom, xml, opcache
+          coverage: none
+          tools: composer:v2
+
+      - name: Cache Composer packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/composer
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress
+
+      # The custom code paths are the unit the quality tools scope to. Creating
+      # them keeps every find guard, and a bare phpcs/phpstan run, working on a
+      # project that has only modules or only a theme so far.
+      - name: Ensure the custom code paths exist
+        run: mkdir -p $LINT_PATHS
+
+      - name: PHPCS (Drupal, DrupalPractice)
+        run: |
+          for p in $LINT_PATHS; do
+            if find "$p" -type f -print -quit | grep -q .; then
+              vendor/bin/phpcs "$p"
+            else
+              echo "No files found under $p; skipping phpcs."
+            fi
+          done
+
+      - name: PHPStan
+        run: |
+          for p in $LINT_PATHS; do
+            if find "$p" -type f -print -quit | grep -q .; then
+              vendor/bin/phpstan analyse --no-progress "$p"
+            else
+              echo "No files found under $p; skipping phpstan."
+            fi
+          done
+
+      - name: Twig CS Fixer
+        run: |
+          for p in $LINT_PATHS; do
+            if find "$p" -name '*.twig' -print -quit | grep -q .; then
+              vendor/bin/twig-cs-fixer lint "$p"
+            else
+              echo "No .twig files found under $p; skipping."
+            fi
+          done
+
+      - name: PHPUnit (unit + kernel)
+        env:
+          SIMPLETEST_DB: sqlite://localhost//tmp/db.sqlite
+          SYMFONY_DEPRECATIONS_HELPER: weak
+        run: |
+          dirs=""
+          for suite in Unit Kernel; do
+            for d in $(find $LINT_PATHS -type d -path "*/tests/src/$suite" 2>/dev/null); do
+              dirs="$dirs $d"
+            done
+          done
+          if [ -n "$dirs" ]; then
+            vendor/bin/phpunit -c web/core $dirs
+          else
+            echo "No Unit/Kernel tests found under $LINT_PATHS; skipping."
+          fi
+
+      - name: Check for JS/CSS/YAML files
+        id: frontend_check
+        run: |
+          if find $LINT_PATHS \( -name '*.js' -o -name '*.yml' -o -name '*.css' \) -print -quit | grep -q .; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "No .js, .yml, or .css files found under $LINT_PATHS; skipping ESLint/Stylelint setup."
+          fi
+
+      - name: Set up Node
+        if: steps.frontend_check.outputs.found == 'true'
+        uses: actions/setup-node@v7
+        with:
+          node-version: '20'
+
+      - name: Install Drupal core's frontend dependencies
+        if: steps.frontend_check.outputs.found == 'true'
+        run: |
+          cd web/core
+          corepack enable
+          yarn install
+
+      - name: ESLint (Drupal core config)
+        if: steps.frontend_check.outputs.found == 'true'
+        run: |
+          for p in $LINT_PATHS; do
+            if find "$p" \( -name '*.js' -o -name '*.yml' \) -print -quit | grep -q .; then
+              node web/core/node_modules/.bin/eslint "$p" \
+                --no-error-on-unmatched-pattern \
+                --ignore-pattern='*.es6.js' \
+                --resolve-plugins-relative-to=web/core \
+                --ext=.js,.yml \
+                -c web/core/.eslintrc.passing.json
+            else
+              echo "No .js or .yml files found under $p; skipping eslint."
+            fi
+          done
+
+      - name: Stylelint (Drupal core config)
+        if: steps.frontend_check.outputs.found == 'true'
+        run: |
+          for p in $LINT_PATHS; do
+            if find "$p" -name '*.css' -print -quit | grep -q .; then
+              web/core/node_modules/.bin/stylelint --config web/core/.stylelintrc.json "$p/**/*.css"
+            else
+              echo "No .css files found under $p; skipping stylelint."
+            fi
+          done
+
+  prettier:
+    name: Prettier
+    needs: guard
+    if: needs.guard.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    env:
+      # The custom code workspace. Keep in step with LINT_PATHS in the Makefile.
+      LINT_PATHS: web/modules/custom web/themes/custom
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '20'
+      - run: npm install --no-audit --no-fund
+      - name: Ensure the custom code paths exist
+        run: mkdir -p $LINT_PATHS
+      - name: Prettier
+        run: |
+          for p in $LINT_PATHS; do
+            if find "$p" \( -name '*.css' -o -name '*.js' -o -name '*.json' -o -name '*.yml' -o -name '*.yaml' -o -name '*.md' \) -print -quit | grep -q .; then
+              npx prettier --check --no-error-on-unmatched-pattern "$p/**/*.{css,js,json,yml,yaml,md}"
+            else
+              echo "No matching files found under $p; skipping prettier."
+            fi
+          done
+
+      - name: CSpell
+        run: |
+          for p in $LINT_PATHS; do
+            if find "$p" -type f -print -quit | grep -q .; then
+              npx cspell --no-progress --no-must-find-files "$p/**"
+            else
+              echo "No files found under $p; skipping cspell."
+            fi
+          done
+
+  # Needs live verification: this job has been validated for YAML syntax only,
+  # not run against real CI infrastructure yet. Installing the LocalGov
+  # profile in CI is slow and its behaviour under GitHub Actions runners is
+  # unproven. If it turns out too slow or flaky here, switch INSTALL_PROFILE
+  # to "minimal" for this job only (minimal has no content types by default,
+  # so the node-creation step below would need a bundle created first).
+  # The VRT step below also needs live verification for the "generate and
+  # upload, do not fail" first-run path and the genuine-diff failure path;
+  # only exercised locally against a manually spun-up site so far.
+  browser:
+    name: Browser checks (accessibility + visual regression)
+    needs: guard
+    if: needs.guard.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: gd, pdo_sqlite, sqlite3, mbstring, dom, xml, opcache
+          coverage: none
+          tools: composer:v2
+
+      - name: Cache Composer packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/composer
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress
+
+      - name: Install site (sqlite)
+        timeout-minutes: 20
+        continue-on-error: false
+        run: |
+          vendor/bin/drush si {{INSTALL_PROFILE}} -y \
+            --db-url=sqlite://sites/default/files/.ht.sqlite
+
+      - name: Create a node and set a deterministic front page
+        run: |
+          node_id="$(vendor/bin/drush php:eval '
+            $bundles = array_keys(\Drupal\node\Entity\NodeType::loadMultiple());
+            if (empty($bundles)) { return; }
+            $node = \Drupal\node\Entity\Node::create([
+              "type" => reset($bundles),
+              "title" => "A11y CI test page",
+              "status" => 1,
+            ]);
+            $node->save();
+            echo $node->id();
+          ')"
+          if [ -n "$node_id" ]; then
+            echo "Created node $node_id"
+            # LocalGov redirects an anonymous "/" visit to /user/login, whose
+            # Design System login template shows a randomly chosen hero photo
+            # per request, so a screenshot of "/" is never the same twice.
+            # Pointing the front page at the node just created makes "/"
+            # deterministic for both the axe-core scan and the VRT spec,
+            # which share this one scan-urls.json list and always include
+            # "/" for every flavour.
+            vendor/bin/drush config:set system.site page.front "/node/${node_id}" -y
+            echo "Set system.site page.front to /node/${node_id}"
+          else
+            echo "No content types available; the scan will skip a node page."
+            echo "Front page left at its install default; no node exists to point it at."
+          fi
+          echo "A11Y_NODE_ID=${node_id}" >> "$GITHUB_ENV"
+
+      - name: Serve the site
+        run: |
+          vendor/bin/drush rs 127.0.0.1:8888 >/tmp/drush-rs.log 2>&1 &
+          echo $! > /tmp/server.pid
+
+          ready=false
+          for i in $(seq 1 30); do
+            if curl -sSf http://127.0.0.1:8888/ >/dev/null 2>&1; then
+              ready=true
+              break
+            fi
+            sleep 2
+          done
+
+          if [ "$ready" = false ]; then
+            echo "drush runserver did not respond; falling back to php -S."
+            kill "$(cat /tmp/server.pid)" 2>/dev/null || true
+            php -S 127.0.0.1:8888 -t web >/tmp/php-s.log 2>&1 &
+            echo $! > /tmp/server.pid
+            for i in $(seq 1 15); do
+              if curl -sSf http://127.0.0.1:8888/ >/dev/null 2>&1; then
+                ready=true
+                break
+              fi
+              sleep 2
+            done
+          fi
+
+          if [ "$ready" = false ]; then
+            echo "Site did not respond on 127.0.0.1:8888." >&2
+            cat /tmp/drush-rs.log /tmp/php-s.log 2>/dev/null
+            exit 1
+          fi
+
+      - name: Build the shared scan URL list for the installed site
+        # Cater both the accessibility and visual regression scans to whatever
+        # profile or recipe was installed: always the front page, the node we
+        # just created (by its real id), and /search only when the installed
+        # site actually serves it. This avoids false load failures on
+        # flavours that do not use those paths, while still surfacing real
+        # accessibility violations and visual diffs on the pages that do
+        # exist.
+        run: |
+          urls='["/"'
+          if [ -n "${A11Y_NODE_ID}" ]; then
+            urls="${urls},\"/node/${A11Y_NODE_ID}\""
+          fi
+          code="$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8888/search || true)"
+          if [ "${code:-000}" -ge 200 ] && [ "${code:-000}" -lt 400 ]; then
+            urls="${urls},\"/search\""
+          else
+            echo "/search returned ${code:-000}; excluding it from the scan."
+          fi
+          urls="${urls}]"
+          printf '%s\n' "$urls" > scan-urls.json
+          echo "Scan URLs: $urls"
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '20'
+
+      - run: npm install --no-audit --no-fund
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Accessibility scan (axe-core via Playwright)
+        run: node scripts/a11y-scan.mjs
+
+      - name: Visual regression test (Playwright)
+        id: vrt
+        run: |
+          if [ -d tests/vrt/__screenshots__/linux ] && find tests/vrt/__screenshots__/linux -name '*.png' -print -quit | grep -q .; then
+            echo "Committed Linux baselines found; comparing against them."
+            npx playwright test tests/vrt
+          else
+            echo "No committed Linux baselines yet; generating them instead of failing this run."
+            npx playwright test tests/vrt --update-snapshots
+            echo "baselines_generated=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload generated VRT baselines
+        if: steps.vrt.outputs.baselines_generated == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: vrt-baselines-linux
+          path: tests/vrt/__screenshots__/linux/
+          if-no-files-found: error
+
+      - name: Upload VRT diff report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: vrt-report
+          path: playwright-report/
+          if-no-files-found: ignore
+
+      - name: Show server logs
+        if: failure()
+        run: cat /tmp/drush-rs.log /tmp/php-s.log 2>/dev/null || true

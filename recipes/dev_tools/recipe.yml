@@ -1,0 +1,7 @@
+name: 'Dev tools'
+description: 'Local-only development tooling: Devel and Environment Indicator (with its toolbar integration). Colours, Twig debug, and cache settings are per-environment settings.local.php concerns, not this recipe. Its modules are covered by config_exclude_modules in assets/settings.local.php, except environment_indicator itself, which is allowed to flow through config sync (see that file for why).'
+type: 'Development tooling'
+install:
+  - devel
+  - environment_indicator
+  - environment_indicator_toolbar

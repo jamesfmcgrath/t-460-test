@@ -1,0 +1,7 @@
+parameters:
+  # Start conservative; raise the level as the custom code hardens.
+  level: 2
+  # The custom code workspace. Keep in step with LINT_PATHS in the Makefile.
+  paths:
+    - web/modules/custom
+    - web/themes/custom

@@ -1,0 +1,95 @@
+#!/bin/bash
+
+set -euo pipefail
+
+# Enable trace if requested: TRACE=1 install-drupal
+if [[ "${TRACE:-0}" == "1" ]]; then
+  set -x
+fi
+
+# --no-commit skips the git add/commit of the exported config; the export
+# itself still runs. Strip it out of the positional args so it doesn't get
+# mistaken for a profile selection.
+no_commit=0
+args=()
+for arg in "$@"; do
+  if [[ "$arg" == "--no-commit" ]]; then
+    no_commit=1
+  else
+    args+=("$arg")
+  fi
+done
+
+echo "What profile do you want to install?"
+options=("Standard" "Umami" "LocalGov" "LocalGov (with Demo Content)" "LocalGov Microsites" "LocalGov (with Elections)" "Drupal CMS starter (recipe)")
+
+# Check if a command-line argument was provided
+if [ ${#args[@]} -gt 0 ]; then
+  # Use the command-line argument as the profile selection
+  profile_selection=${args[0]}
+else
+  # No argument provided, fall back to interactive selection
+  select profile_selection in "${options[@]}"
+  do
+    break
+  done
+fi
+
+case $profile_selection in
+  "Standard" | "standard" | "st" | 1)
+    profile_label="Standard"
+    ddev drush si standard -y
+    ;;
+  "Umami" | "umami" | 2)
+    profile_label="Umami"
+    ddev drush si demo_umami -y
+    ;;
+  "LocalGov" | "localgov" | "lgd" | 3)
+    profile_label="LocalGov"
+    ddev drush si localgov -y
+    ;;
+  "LocalGov (with Demo Content)" | "lgddc" | 4)
+    profile_label="LocalGov (with Demo Content)"
+    ddev drush si localgov -y
+    ddev drush en localgov_demo -y
+    ;;
+  "LocalGov Microsites" | "lgdms" | 5)
+    profile_label="LocalGov Microsites"
+    ddev drush si localgov_microsites -y
+    ;;
+  "LocalGov (with Elections)" |"lgde" | 6)
+    profile_label="LocalGov (with Elections)"
+    ddev drush si localgov -y
+    ddev drush en localgov_elections_demo_content -y
+    ;;
+  "Drupal CMS starter (recipe)" | "cms" | "recipes/drupal_cms_starter" | 7)
+    # Drupal CMS installs headlessly from a recipe path, not a profile name.
+    profile_label="Drupal CMS starter"
+    ddev drush si recipes/drupal_cms_starter -y
+    ;;
+  *)
+    echo "Invalid option. Please run the script again with a valid option."
+    exit 1
+    ;;
+esac
+
+ddev drush cex -y
+ddev drush cr
+
+# If this project is in a git repo, commit the exported config.
+# Skip when not in a repo (common for fresh throwaway installs) or when
+# --no-commit was given.
+if [[ "$no_commit" -eq 1 ]]; then
+  echo "Note: --no-commit given; skipping git add/commit of exported config."
+elif command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  if [[ -d "config" ]]; then
+    git add config
+    git commit -m "Export site config after ${profile_label} install" || true
+  else
+    echo "Note: No ./config directory found; skipping git commit."
+  fi
+else
+  echo "Note: Not a git repo; skipping git commit."
+fi
+
+ddev drush uli

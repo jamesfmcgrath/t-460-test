@@ -1,0 +1,40 @@
+# AI agent tools, tracked files are canonical dev-environment config
+# Skills are installed from agr.toml + agr.lock (agr sync / setup.sh); do not vendor copies.
+.claude/skills/
+.cursor/skills/
+.claude/settings.local.json
+# Tracked (do NOT ignore): AGENTS.md, CLAUDE.md (import stub), .claude/MEMORY.md,
+# .claude/agents/, .claude/commands/, .claude/settings.local.json.dist, agr.toml,
+# template.answers (the answers scripts/init.sh was run with; commit it)
+# agr.lock is NOT tracked here (agr.toml still holds the {{SKILL_FORK}} token);
+# setup.sh generates it on first run and the created project should commit it.
+
+# Drupal / DDEV build artifacts (adjust to your project's policy)
+/vendor/
+/web/core/
+/web/modules/contrib/
+/web/themes/contrib/
+/web/sites/*/files/
+/web/sites/*/settings.local.php
+.ddev/.dbimageBuild/
+
+# OS / editor
+.DS_Store
+
+# Node / Prettier / PHPUnit artifacts
+/node_modules/
+/package-lock.json
+.phpunit.cache/
+/web/sites/simpletest/
+.superpowers/
+
+# Playwright visual regression test (VRT) output. Baselines are generated and
+# compared on Linux/CI only (font rendering makes cross-OS baselines flaky);
+# only tests/vrt/__screenshots__/linux/ is authoritative and gets committed.
+# macOS-generated baselines stay local. See README's "Visual regression"
+# section.
+/tests/vrt/__screenshots__/darwin/
+/tests/vrt/__screenshots__/win32/
+/test-results/
+/playwright-report/
+/blob-report/

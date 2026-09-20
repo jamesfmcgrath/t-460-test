@@ -1,0 +1,8 @@
+# Local development services, copied into place by scripts/setup.sh to
+# web/sites/development.services.yml. Edit the copy there, not this
+# template: setup.sh only copies this file when the destination is absent.
+parameters:
+  twig.config:
+    debug: true
+    auto_reload: true
+    cache: false

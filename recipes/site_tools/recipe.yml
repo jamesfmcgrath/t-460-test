@@ -1,0 +1,10 @@
+name: 'Site tools'
+description: 'Production site utility modules: Admin Toolbar, Twig Tweak, and ECA (Event - Condition - Action) with its BPMN visual modeller. These are production features: they are NOT in config_exclude_modules, and they export into the site''s configured config sync directory on the next drush cex. ctools is required by Composer but deliberately not in this install list: it is an API module other contrib modules enable as a dependency when they need it.'
+type: 'Site configuration'
+install:
+  - admin_toolbar
+  - admin_toolbar_tools
+  - twig_tweak
+  - eca
+  - eca_ui
+  - bpmn_io

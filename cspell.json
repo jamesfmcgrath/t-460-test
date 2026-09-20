@@ -1,0 +1,23 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "ignorePaths": [
+    "vendor/**",
+    "node_modules/**",
+    "web/core/**",
+    "web/modules/contrib/**",
+    "web/themes/contrib/**",
+    "**/*.min.js",
+    "**/*.min.css",
+    "composer.lock",
+    "package-lock.json"
+  ],
+  "dictionaryDefinitions": [
+    {
+      "name": "project-words",
+      "path": "./.cspell-project-words.txt",
+      "addWords": true
+    }
+  ],
+  "dictionaries": ["project-words"]
+}

@@ -1,0 +1,46 @@
+# GitLab CI pipeline for this module on git.drupalcode.org.
+# Copy into the module with `make module-ci` (see Makefile).
+#
+# Canonical include block from
+# https://git.drupalcode.org/project/gitlab_templates/-/blob/main/gitlab-ci/template.gitlab-ci.yml
+# Full variable list and defaults:
+# https://git.drupalcode.org/project/gitlab_templates/-/blob/main/includes/include.drupalci.variables.yml
+include:
+  - project: $_GITLAB_TEMPLATES_REPO
+    ref: $_GITLAB_TEMPLATES_REF
+    file:
+      - '/includes/include.drupalci.main.yml'
+      - '/includes/include.drupalci.variables.yml'
+      - '/includes/include.drupalci.workflows.yml'
+
+variables:
+  # Twig CS Fixer is SKIPPED by default upstream (SKIP_TWIG_CS_FIXER
+  # defaults to '1'). This template lints Twig locally (make twig-lint) and
+  # in GitHub Actions, so keep it enabled here too.
+  SKIP_TWIG_CS_FIXER: '0'
+
+  # --- Validation jobs, all enabled by default upstream. Uncomment to skip. ---
+  # SKIP_COMPOSER_LINT: '1'  # Composer Lint (composer validate + normalize check).
+  # SKIP_PHPCS: '1'          # PHP Coding Standards (Drupal, DrupalPractice).
+  # SKIP_PHPSTAN: '1'        # PHPStan static analysis.
+  # SKIP_ESLINT: '1'         # ESLint against .js and .yml files.
+  # SKIP_STYLELINT: '1'      # Stylelint against .css files.
+  # SKIP_CSPELL: '1'         # CSpell spell-check of code and comments.
+
+  # --- Test jobs, enabled by default upstream (current Drupal core only). ---
+  # SKIP_PHPUNIT: '1'        # PHPUnit (unit/kernel/functional per test group).
+  # SKIP_NIGHTWATCH: '1'     # Nightwatch JS functional tests.
+
+  # --- Opt-in jobs, disabled by default. Uncomment to run. ---
+  # RUN_JOB_UPGRADE_STATUS: '1'   # Experimental: check against next major core via upgrade_status.
+  # RUN_JOB_SECRET_DETECTION: '1' # GitLab secret detection scan.
+
+  # --- Variant testing, disabled by default. Uncomment to opt in. ---
+  # OPT_IN_TEST_NEXT_MAJOR: '1'      # Test against the next major Drupal core version.
+  # OPT_IN_TEST_NEXT_MINOR: '1'      # Test against the next minor Drupal core version.
+  # OPT_IN_TEST_PREVIOUS_MINOR: '1'  # Test against the previous minor Drupal core version.
+  # OPT_IN_TEST_PREVIOUS_MAJOR: '1'  # Test against the previous major Drupal core version.
+  # OPT_IN_TEST_MAX_PHP: '1'         # Test against the maximum supported PHP version.
+
+  # --- PHP version target for the default (current) variant. ---
+  # _TARGET_PHP: '8.3'  # Defaults to Drupal core's own minimum supported PHP version.

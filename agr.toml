@@ -1,0 +1,25 @@
+# agent-resources manifest. Skills install into .claude/skills/ and .cursor/skills/
+# and are gitignored; agr.toml is the tracked source of truth, and the project
+# created from this template commits its generated agr.lock (see below).
+# Reproduce on a fresh clone with: agr sync   (see scripts/setup.sh)
+#
+# agr.lock is NOT committed in this bare template: {{SKILL_FORK}} below is a
+# template token, and agr cannot resolve it into a lock until init.sh has
+# substituted a real GitHub owner. setup.sh generates agr.lock on first run,
+# after substitution; commit it in the project created from this template.
+
+default_source = "github"
+tools = ["claude", "cursor"]
+default_owner = "computerlovetech"
+default_repo = "skills"
+
+dependencies = [
+    {handle = "madsnorgaard/drupal-agent-resources/drupal-expert", type = "skill"},
+    {handle = "madsnorgaard/drupal-agent-resources/ddev-expert", type = "skill"},
+    {handle = "{{SKILL_FORK}}/drupal-agent-resources/drupal-localgov", type = "skill"},
+]
+
+[[source]]
+name = "github"
+type = "git"
+url = "https://github.com/{owner}/{repo}.git"

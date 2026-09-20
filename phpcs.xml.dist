@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="{{MODULE_NAME}}">
+  <description>PHPCS: Drupal and DrupalPractice standards for the custom code workspace.</description>
+
+  <arg name="extensions" value="inc,install,module,php,profile,test,theme,yml"/>
+  <arg name="colors"/>
+  <arg value="p"/>
+
+  <!-- The custom code workspace. Keep in step with LINT_PATHS in the Makefile. -->
+  <file>web/modules/custom</file>
+  <file>web/themes/custom</file>
+
+  <rule ref="./vendor/drupal/coder/coder_sniffer/Drupal"/>
+  <rule ref="./vendor/drupal/coder/coder_sniffer/DrupalPractice"/>
+</ruleset>
